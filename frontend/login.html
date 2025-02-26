@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - HealthAnalytics Pro</title>
+    <link href="css/login.css" rel="stylesheet">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Welcome Back</h1>
+            <p>Login to access your dashboard</p>
+        </div>
+        
+        <form id="loginForm" onsubmit="return validateForm(event)">
+            <div class="form-group" id="usernameGroup">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+                <div class="error-message">Please enter your username</div>
+            </div>
+
+            <div class="form-group" id="passwordGroup">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+                <div class="error-message">Please enter your password</div>
+            </div>
+
+            <button type="submit" class="login-btn">Login</button>
+        </form>
+
+        <div class="login-footer">
+            <p>Don't have an account? <a href="signup.html">Sign up</a></p>
+            <p><a href="#">Forgot Password?</a></p>
+        </div>
+    </div>
+
+    <script>
+        function validateForm(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username');
+            const password = document.getElementById('password');
+            
+            let isValid = true;
+
+            // Reset all error states
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error');
+            });
+
+            if (!username.value.trim()) {
+                document.getElementById('usernameGroup').classList.add('error');
+                isValid = false;
+            }
+
+            if (!password.value) {
+                document.getElementById('passwordGroup').classList.add('error');
+                isValid = false;
+            }
+
+            if (isValid) {
+                // Show loading state
+                const submitBtn = document.querySelector('.login-btn');
+                submitBtn.classList.add('loading');
+
+                // Send login request
+                fetch('http://localhost:5000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username.value.trim(),
+                        password: password.value
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.token) {
+                        // Store token and user data
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        
+                        // Show success message and redirect to dashboard
+                        alert('Login successful!');
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        alert(data.message || 'Login failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Login failed. Please try again.');
+                })
+                .finally(() => {
+                    submitBtn.classList.remove('loading');
+                });
+            }
+
+            return false;
+        }
+
+        // Remove error state when user starts typing
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.closest('.form-group').classList.remove('error');
+            });
+        });
+    </script>
+</body>
+</html>

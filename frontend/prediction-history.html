@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Prediction History - HealthAnalytics</title>
+    <link href="css/dashboard.css" rel="stylesheet">
+    <link href="css/prediction-history.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://via.placeholder.com/50" alt="Logo" class="logo">
+                <h2>HealthAnalytics</h2>
+            </div>
+            <ul class="nav-links">
+                <li>
+                    <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+                </li>
+                <li>
+                    <a href="health-prediction.html"><i class="fas fa-chart-line"></i> Health Prediction</a>
+                </li>
+                <li class="active">
+                    <a href="prediction-history.html"><i class="fas fa-history"></i> History</a>
+                </li>
+                <li>
+                    <a href="#"><i class="fas fa-user"></i> Profile</a>
+                </li>
+                <li>
+                    <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="top-bar">
+                <h1><i class="fas fa-history"></i> Health Prediction History</h1>
+                <div class="user-info">
+                    <button id="exportBtn" class="export-btn">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="user">
+                        <img src="https://via.placeholder.com/40" alt="User" class="user-avatar">
+                        <span class="username">John Doe</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="history-container">
+                <!-- Trends Overview -->
+                <div class="trends-section">
+                    <h2>Health Trends</h2>
+                    <div class="trends-grid">
+                        <div class="trend-card">
+                            <canvas id="overallScoreChart"></canvas>
+                        </div>
+                        <div class="trend-card">
+                            <canvas id="vitalSignsChart"></canvas>
+                        </div>
+                        <div class="trend-card">
+                            <canvas id="riskFactorsChart"></canvas>
+                        </div>
+                        <div class="trend-card">
+                            <canvas id="lifestyleScoreChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prediction History Table -->
+                <div class="history-section">
+                    <h2>Previous Predictions</h2>
+                    <div class="table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Overall Score</th>
+                                    <th>Health Status</th>
+                                    <th>BMI</th>
+                                    <th>Blood Pressure</th>
+                                    <th>Heart Rate</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <!-- Filled dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Prediction Details Modal -->
+    <div id="predictionModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Prediction Details</h2>
+            <div id="modalContent">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Authentication check
+        window.onload = async function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Update username
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const username = document.querySelector('.username');
+            if (username && user.username) {
+                username.textContent = user.username;
+            }
+
+            // Load prediction history
+            await loadPredictionHistory();
+            await loadHealthTrends();
+        };
+
+        async function loadPredictionHistory() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5000/api/health-predictions', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    displayPredictionHistory(data.predictions);
+                }
+            } catch (error) {
+                console.error('Error loading prediction history:', error);
+            }
+        }
+
+        function displayPredictionHistory(predictions) {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = predictions.map(p => `
+                <tr>
+                    <td>${new Date(p.timestamp).toLocaleDateString()}</td>
+                    <td>${Math.round(p.scores.overall)}</td>
+                    <td>
+                        <span class="health-status ${p.healthStatus.toLowerCase()}">
+                            ${p.healthStatus}
+                        </span>
+                    </td>
+                    <td>${p.metrics.bmi.toFixed(1)}</td>
+                    <td>${p.metrics.bloodPressure.systolic}/${p.metrics.bloodPressure.diastolic}</td>
+                    <td>${p.metrics.heartRate}</td>
+                    <td>
+                        <button onclick="showPredictionDetails(${JSON.stringify(p)})" class="view-btn">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadHealthTrends() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5000/api/health-trends', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    displayHealthTrends(data.trends);
+                }
+            } catch (error) {
+                console.error('Error loading health trends:', error);
+            }
+        }
+
+        function displayHealthTrends(trends) {
+            // Overall Score Chart
+            new Chart(document.getElementById('overallScoreChart'), {
+                type: 'line',
+                data: {
+                    labels: trends.dates,
+                    datasets: [{
+                        label: 'Overall Health Score',
+                        data: trends.overallScores,
+                        borderColor: '#2d5ff3',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Overall Health Score Trend'
+                        }
+                    }
+                }
+            });
+
+            // Vital Signs Chart
+            new Chart(document.getElementById('vitalSignsChart'), {
+                type: 'line',
+                data: {
+                    labels: trends.dates,
+                    datasets: [
+                        {
+                            label: 'Blood Pressure',
+                            data: trends.bloodPressure,
+                            borderColor: '#ff6b6b',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Heart Rate',
+                            data: trends.heartRate,
+                            borderColor: '#51cf66',
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Vital Signs Trends'
+                        }
+                    }
+                }
+            });
+        }
+
+        function showPredictionDetails(prediction) {
+            const modal = document.getElementById('predictionModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                <div class="prediction-details">
+                    <div class="detail-section">
+                        <h3>Vital Signs</h3>
+                        <p>BMI: ${prediction.metrics.bmi.toFixed(1)}</p>
+                        <p>Blood Pressure: ${prediction.metrics.bloodPressure.systolic}/${prediction.metrics.bloodPressure.diastolic}</p>
+                        <p>Heart Rate: ${prediction.metrics.heartRate} bpm</p>
+                        <p>Oxygen Saturation: ${prediction.metrics.oxygenSaturation}%</p>
+                        <p>Glucose Level: ${prediction.metrics.glucoseLevel} mg/dL</p>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Risk Factors</h3>
+                        <p>Heart Disease: ${prediction.riskFactors.heartDisease}%</p>
+                        <p>Stroke: ${prediction.riskFactors.stroke}%</p>
+                        <p>Diabetes: ${prediction.riskFactors.diabetes}%</p>
+                        <p>Obesity: ${prediction.riskFactors.obesity}%</p>
+                        <p>Hypertension: ${prediction.riskFactors.hypertension}%</p>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Lifestyle Factors</h3>
+                        <p>Activity Level: ${prediction.lifestyle.activityLevel}</p>
+                        <p>Smoking Status: ${prediction.lifestyle.smokingStatus}</p>
+                        <p>Alcohol Consumption: ${prediction.lifestyle.alcoholConsumption}</p>
+                        <p>Sleep Hours: ${prediction.lifestyle.sleepHours}</p>
+                        <p>Stress Level: ${prediction.lifestyle.stressLevel}</p>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Recommendations</h3>
+                        <ul>
+                            ${prediction.recommendations.map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        // Export functionality
+        document.getElementById('exportBtn').addEventListener('click', async function() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5000/api/export-health-data', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'health_data.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                alert('Error exporting data');
+            }
+        });
+
+        // Modal close button
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('predictionModal').style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('predictionModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>

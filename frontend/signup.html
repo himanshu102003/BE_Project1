@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - HealthAnalytics Pro</title>
+    <link href="css/signup.css" rel="stylesheet">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Create Account</h1>
+            <p>Join HealthAnalytics Pro today</p>
+        </div>
+        
+        <form id="signupForm" onsubmit="return validateForm(event)">
+            <div class="form-group" id="usernameGroup">
+                <label for="username">Username*</label>
+                <input type="text" id="username" name="username" required>
+                <div class="error-message">Please enter a username (minimum 3 characters)</div>
+            </div>
+
+            <div class="form-group" id="emailGroup">
+                <label for="email">Email Address*</label>
+                <input type="email" id="email" name="email" required>
+                <div class="error-message">Please enter a valid email address</div>
+            </div>
+
+            <div class="form-group" id="passwordGroup">
+                <label for="password">Create Password*</label>
+                <input type="password" id="password" name="password" required>
+                <div class="error-message">Password must be at least 8 characters with letters and numbers</div>
+            </div>
+
+            <div class="form-group" id="confirmPasswordGroup">
+                <label for="confirmPassword">Confirm Password*</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                <div class="error-message">Passwords do not match</div>
+            </div>
+
+            <div class="form-group" id="ageGroup">
+                <label for="age">Age*</label>
+                <input type="number" id="age" name="age" min="1" max="120" required>
+                <div class="error-message">Please enter a valid age (1-120)</div>
+            </div>
+
+            <button type="submit" class="login-btn signup-btn">Create Account</button>
+        </form>
+
+        <div class="message-container" id="messageContainer"></div>
+
+        <div class="login-footer">
+            <p>Already have an account? <a href="login.html">Login</a></p>
+            <p><a href="home.html">Back to Home</a></p>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(message, type = 'error') {
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => {
+                messageContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        function validateForm(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username');
+            const email = document.getElementById('email');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const age = document.getElementById('age');
+            
+            let isValid = true;
+
+            // Reset all error states
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error');
+            });
+
+            // Validate username (minimum 3 characters)
+            if (!username.value.trim() || username.value.trim().length < 3) {
+                document.getElementById('usernameGroup').classList.add('error');
+                showMessage('Username must be at least 3 characters long');
+                isValid = false;
+            }
+
+            // Validate email
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email.value.trim() || !emailPattern.test(email.value.trim())) {
+                document.getElementById('emailGroup').classList.add('error');
+                showMessage('Please enter a valid email address');
+                isValid = false;
+            }
+
+            // Validate password (minimum 8 characters, must contain letters and numbers)
+            const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+            if (!password.value || !passwordPattern.test(password.value)) {
+                document.getElementById('passwordGroup').classList.add('error');
+                showMessage('Password must be at least 8 characters and contain both letters and numbers');
+                isValid = false;
+            }
+
+            // Validate confirm password
+            if (password.value !== confirmPassword.value) {
+                document.getElementById('confirmPasswordGroup').classList.add('error');
+                showMessage('Passwords do not match');
+                isValid = false;
+            }
+
+            // Validate age
+            const ageValue = parseInt(age.value);
+            if (!age.value || ageValue < 1 || ageValue > 120) {
+                document.getElementById('ageGroup').classList.add('error');
+                showMessage('Please enter a valid age between 1 and 120');
+                isValid = false;
+            }
+
+            if (isValid) {
+                // Show loading state
+                const submitBtn = document.querySelector('.signup-btn');
+                submitBtn.classList.add('loading');
+                submitBtn.disabled = true;
+                
+                // Send data to backend
+                fetch('http://localhost:5000/api/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username.value.trim(),
+                        email: email.value.trim(),
+                        password: password.value,
+                        age: ageValue
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'User created successfully') {
+                        showMessage('Account created successfully! Redirecting to login...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 2000);
+                    } else {
+                        showMessage(data.message || 'Error creating account');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('Error creating account. Please try again.');
+                })
+                .finally(() => {
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                });
+            }
+
+            return false;
+        }
+
+        // Remove error state when user starts typing
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function() {
+                this.closest('.form-group').classList.remove('error');
+            });
+        });
+    </script>
+    <style>
+        .message-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .message {
+            padding: 15px 25px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 500;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message.error {
+            background-color: #ff3860;
+        }
+
+        .message.success {
+            background-color: #23d160;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</body>
+</html>

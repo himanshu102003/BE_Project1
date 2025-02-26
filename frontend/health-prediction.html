@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Prediction Analysis - HealthAnalytics</title>
+    <link href="css/dashboard.css" rel="stylesheet">
+    <link href="css/health-prediction.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://via.placeholder.com/50" alt="Logo" class="logo">
+                <h2>HealthAnalytics</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li class="active"><a href="health-prediction.html"><i class="fas fa-chart-line"></i> Health Prediction</a></li>
+                <li><a href="prediction-history.html"><i class="fas fa-history"></i> History</a></li>
+                <li><a href="#"><i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="top-bar">
+                <h1><i class="fas fa-heartbeat"></i> Health Prediction Analysis</h1>
+                <div class="user-info">
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="user">
+                        <img src="https://via.placeholder.com/40" alt="User" class="user-avatar">
+                        <span class="username">John Doe</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="health-prediction-container">
+                <!-- Step Progress Indicator -->
+                <div class="step-progress">
+                    <div class="step active">1</div>
+                    <div class="step">2</div>
+                    <div class="step">3</div>
+                    <div class="step">4</div>
+                </div>
+
+                <form id="health-prediction-form" class="prediction-questionnaire">
+                    <!-- Personal Information -->
+                    <div class="form-step" data-section="1">
+                        <h2>Personal Information</h2>
+                        <div class="form-group">
+                            <label for="age">Age</label>
+                            <input type="number" id="age" name="age" required min="1" max="120">
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <div class="radio-group">
+                                <input type="radio" id="male" name="gender" value="male" required>
+                                <label for="male">Male</label>
+                                <input type="radio" id="female" name="gender" value="female">
+                                <label for="female">Female</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="height">Height (cm)</label>
+                            <input type="number" id="height" name="height" required min="50" max="250">
+                        </div>
+                        <div class="form-group">
+                            <label for="weight">Weight (kg)</label>
+                            <input type="number" id="weight" name="weight" required min="20" max="300">
+                        </div>
+                    </div>
+
+                    <!-- Vital Signs -->
+                    <div class="form-step" data-section="2">
+                        <h2>Vital Signs</h2>
+                        <div class="form-group">
+                            <label for="bloodPressureSystolic">Blood Pressure (Systolic)</label>
+                            <input type="number" id="bloodPressureSystolic" name="systolic" required min="70" max="200">
+                        </div>
+                        <div class="form-group">
+                            <label for="bloodPressureDiastolic">Blood Pressure (Diastolic)</label>
+                            <input type="number" id="bloodPressureDiastolic" name="diastolic" required min="40" max="130">
+                        </div>
+                        <div class="form-group">
+                            <label for="heartRate">Heart Rate (bpm)</label>
+                            <input type="number" id="heartRate" name="heartRate" required min="40" max="200">
+                        </div>
+                        <div class="form-group">
+                            <label for="respiratoryRate">Respiratory Rate (breaths/min)</label>
+                            <input type="number" id="respiratoryRate" name="respiratoryRate" required min="8" max="30">
+                        </div>
+                        <div class="form-group">
+                            <label for="oxygenSaturation">Oxygen Saturation (%)</label>
+                            <input type="number" id="oxygenSaturation" name="oxygenSaturation" required min="85" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="glucoseLevel">Blood Glucose Level (mg/dL)</label>
+                            <input type="number" id="glucoseLevel" name="glucoseLevel" required min="50" max="300">
+                        </div>
+                        <div class="form-group">
+                            <label>Cholesterol Levels (mg/dL)</label>
+                            <div class="cholesterol-inputs">
+                                <input type="number" id="totalCholesterol" name="totalCholesterol" placeholder="Total" required min="100" max="300">
+                                <input type="number" id="hdlCholesterol" name="hdlCholesterol" placeholder="HDL" required min="20" max="100">
+                                <input type="number" id="ldlCholesterol" name="ldlCholesterol" placeholder="LDL" required min="50" max="200">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medical History -->
+                    <div class="form-step" data-section="3">
+                        <h2>Medical History</h2>
+                        <div class="form-group">
+                            <label>Do you have any of the following conditions?</label>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="diabetes" name="medicalConditions" value="diabetes">
+                                <label for="diabetes">Diabetes</label>
+                                
+                                <input type="checkbox" id="hypertension" name="medicalConditions" value="hypertension">
+                                <label for="hypertension">Hypertension</label>
+                                
+                                <input type="checkbox" id="heartDisease" name="medicalConditions" value="heartDisease">
+                                <label for="heartDisease">Heart Disease</label>
+                                
+                                <input type="checkbox" id="asthma" name="medicalConditions" value="asthma">
+                                <label for="asthma">Asthma</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="familyHistory">Family History of Diseases</label>
+                            <textarea id="familyHistory" name="familyHistory" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Lifestyle -->
+                    <div class="form-step" data-section="4">
+                        <h2>Lifestyle Factors</h2>
+                        <div class="form-group">
+                            <label>Physical Activity Level</label>
+                            <div class="radio-group">
+                                <input type="radio" id="sedentary" name="activityLevel" value="sedentary" required>
+                                <label for="sedentary">Sedentary</label>
+                                
+                                <input type="radio" id="moderate" name="activityLevel" value="moderate">
+                                <label for="moderate">Moderate</label>
+                                
+                                <input type="radio" id="active" name="activityLevel" value="active">
+                                <label for="active">Active</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Smoking Status</label>
+                            <div class="radio-group">
+                                <input type="radio" id="nonSmoker" name="smokingStatus" value="nonSmoker" required>
+                                <label for="nonSmoker">Non-smoker</label>
+                                
+                                <input type="radio" id="formerSmoker" name="smokingStatus" value="formerSmoker">
+                                <label for="formerSmoker">Former smoker</label>
+                                
+                                <input type="radio" id="currentSmoker" name="smokingStatus" value="currentSmoker">
+                                <label for="currentSmoker">Current smoker</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Alcohol Consumption</label>
+                            <div class="radio-group">
+                                <input type="radio" id="noDrink" name="alcoholConsumption" value="none" required>
+                                <label for="noDrink">None</label>
+                                
+                                <input type="radio" id="occasional" name="alcoholConsumption" value="occasional">
+                                <label for="occasional">Occasional</label>
+                                
+                                <input type="radio" id="regular" name="alcoholConsumption" value="regular">
+                                <label for="regular">Regular</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="sleepHours">Average Sleep Hours per Night</label>
+                            <input type="number" id="sleepHours" name="sleepHours" required min="3" max="12">
+                        </div>
+                        <div class="form-group">
+                            <label>Stress Level</label>
+                            <div class="radio-group">
+                                <input type="radio" id="lowStress" name="stressLevel" value="low" required>
+                                <label for="lowStress">Low</label>
+                                
+                                <input type="radio" id="moderateStress" name="stressLevel" value="moderate">
+                                <label for="moderateStress">Moderate</label>
+                                
+                                <input type="radio" id="highStress" name="stressLevel" value="high">
+                                <label for="highStress">High</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Diet Type</label>
+                            <div class="radio-group">
+                                <input type="radio" id="balanced" name="dietType" value="balanced" required>
+                                <label for="balanced">Balanced</label>
+                                
+                                <input type="radio" id="vegetarian" name="dietType" value="vegetarian">
+                                <label for="vegetarian">Vegetarian</label>
+                                
+                                <input type="radio" id="vegan" name="dietType" value="vegan">
+                                <label for="vegan">Vegan</label>
+                                
+                                <input type="radio" id="keto" name="dietType" value="keto">
+                                <label for="keto">Keto</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="form-navigation">
+                        <button type="button" class="nav-btn prev-step" style="display: none;">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button type="button" class="nav-btn next-step">
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button type="submit" class="submit-btn" style="display: none;">
+                            Generate Prediction <i class="fas fa-chart-line"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Prediction Results Section -->
+                <div id="prediction-results"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/health-prediction.js"></script>
+</body>
+</html>
