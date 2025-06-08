@@ -23,15 +23,6 @@
                 <li>
                     <a href="health-prediction.html"><i class="fas fa-chart-line"></i> Health Prediction</a>
                 </li>
-                <li>
-                    <a href="prediction-history.html"><i class="fas fa-history"></i> History</a>
-                </li>
-                <li>
-                    <a href="#"><i class="fas fa-user"></i> Profile</a>
-                </li>
-                <li>
-                    <a href="#"><i class="fas fa-cog"></i> Settings</a>
-                </li>
             </ul>
             <div class="sidebar-footer">
                 <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -61,74 +52,13 @@
                     <h3>New Health Prediction</h3>
                     <p>Take a new health assessment</p>
                 </a>
-                <a href="prediction-history.html" class="action-card">
-                    <i class="fas fa-history"></i>
-                    <h3>View History</h3>
-                    <p>Check your previous assessments</p>
-                </a>
-                <div class="action-card" onclick="downloadLatestReport()">
-                    <i class="fas fa-file-medical"></i>
-                    <h3>Latest Report</h3>
-                    <p>Download your latest health report</p>
-                </div>
-                <div class="action-card" onclick="showTrends()">
-                    <i class="fas fa-chart-line"></i>
-                    <h3>Health Trends</h3>
-                    <p>View your health progress</p>
-                </div>
             </div>
 
             <!-- Latest Health Status -->
-            <div class="health-overview">
-                <h2>Latest Health Status</h2>
-                <div class="status-grid">
-                    <div class="status-card">
-                        <h3>Overall Health</h3>
-                        <div class="health-score" id="overallHealthScore">--</div>
-                        <div class="health-status" id="healthStatus">No data</div>
-                    </div>
-                    <div class="status-card">
-                        <h3>Risk Factors</h3>
-                        <canvas id="riskChart"></canvas>
-                    </div>
-                    <div class="status-card">
-                        <h3>Vital Signs</h3>
-                        <div id="vitalSigns">Loading...</div>
-                    </div>
-                    <div class="status-card">
-                        <h3>Lifestyle Score</h3>
-                        <div class="lifestyle-score" id="lifestyleScore">--</div>
-                        <div id="lifestyleDetails">No data</div>
-                    </div>
-                </div>
-            </div>
+           
+          
 
-            <!-- Health Prediction Results -->
-            <div class="prediction-results" id="predictionResults" style="display: none;">
-                <!-- Previous prediction results code -->
-            </div>
-
-            <!-- Health Trends Section -->
-            <div class="trends-section" id="trendsSection" style="display: none;">
-                <h2>Health Trends</h2>
-                <div class="trends-grid">
-                    <div class="trend-card">
-                        <h3>Overall Score Trend</h3>
-                        <canvas id="overallTrendChart"></canvas>
-                    </div>
-                    <div class="trend-card">
-                        <h3>Vital Signs Trend</h3>
-                        <canvas id="vitalsTrendChart"></canvas>
-                    </div>
-                    <div class="trend-card">
-                        <h3>Risk Factors Trend</h3>
-                        <canvas id="riskTrendChart"></canvas>
-                    </div>
-                    <div class="trend-card">
-                        <h3>Lifestyle Score Trend</h3>
-                        <canvas id="lifestyleTrendChart"></canvas>
-                    </div>
-                </div>
+          
             </div>
         </main>
     </div>

@@ -95,40 +95,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const formData = new FormData(predictionForm);
-        const predictionData = {
-            // Personal Information
-            age: parseInt(formData.get('age')),
-            gender: formData.get('gender'),
-            height: parseFloat(formData.get('height')),
-            weight: parseFloat(formData.get('weight')),
+        const data = {};
 
-            // Vital Signs
-            systolic: parseInt(formData.get('bloodPressureSystolic')),
-            diastolic: parseInt(formData.get('bloodPressureDiastolic')),
-            heartRate: parseInt(formData.get('heartRate')),
-            respiratoryRate: parseInt(formData.get('respiratoryRate')),
-            oxygenSaturation: parseInt(formData.get('oxygenSaturation')),
-            glucoseLevel: parseInt(formData.get('glucoseLevel')),
-            cholesterol: {
-                total: parseInt(formData.get('totalCholesterol')),
-                hdl: parseInt(formData.get('hdlCholesterol')),
-                ldl: parseInt(formData.get('ldlCholesterol'))
-            },
+        // Personal Information
+        data.age = parseInt(formData.get('age'));
+        data.gender = formData.get('gender');
+        data.height = parseInt(formData.get('height'));
+        data.weight = parseInt(formData.get('weight'));
 
-            // Medical History
-            medicalConditions: Array.from(formData.getAll('conditions')),
-            familyHistory: formData.get('familyHistory'),
-
-            // Lifestyle Factors
-            activityLevel: formData.get('activityLevel'),
-            smokingStatus: formData.get('smokingStatus'),
-            alcoholConsumption: formData.get('alcoholConsumption'),
-            sleepHours: parseInt(formData.get('sleepHours')),
-            stressLevel: formData.get('stressLevel'),
-            dietType: formData.get('dietType')
+        // Vital Signs
+        data.systolic = parseInt(formData.get('bloodPressureSystolic'));
+        data.diastolic = parseInt(formData.get('bloodPressureDiastolic'));
+        data.heartRate = parseInt(formData.get('heartRate'));
+        data.respiratoryRate = parseInt(formData.get('respiratoryRate'));
+        data.oxygenSaturation = parseInt(formData.get('oxygenSaturation'));
+        data.glucoseLevel = parseInt(formData.get('glucoseLevel'));
+        data.cholesterol = {
+            total: parseInt(formData.get('totalCholesterol')),
+            hdl: parseInt(formData.get('hdlCholesterol')),
+            ldl: parseInt(formData.get('ldlCholesterol'))
         };
 
-        console.log('Prediction data:', predictionData); // Debug log
+        // Medical History
+        data.medicalConditions = Array.from(formData.getAll('medicalConditions'));
+        data.familyHistory = formData.get('familyHistory');
+
+        // Lifestyle
+        data.activityLevel = formData.get('activityLevel');
+        data.smokingStatus = formData.get('smokingStatus');
+        data.alcoholConsumption = formData.get('alcoholConsumption');
+        data.sleepHours = parseInt(formData.get('sleepHours'));
+        data.stressLevel = formData.get('stressLevel');
+        data.dietType = formData.get('dietType');
 
         try {
             const token = localStorage.getItem('token');
@@ -143,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(predictionData)
+                body: JSON.stringify(data)
             });
 
             console.log('Response status:', response.status); // Add status logging
@@ -157,6 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             displayResults(data.prediction);
+            renderHealthPredictionChart(data.prediction);
+            displayPredictionInfo(data.prediction);
         } catch (error) {
             console.error('Error:', error); // Debug log
             showError(error.message);
@@ -166,48 +166,85 @@ document.addEventListener('DOMContentLoaded', () => {
     // Display prediction results
     function displayResults(prediction) {
         console.log('Displaying results:', prediction); // Debug log
-        resultSection.innerHTML = `
-            <h2>Your Health Prediction Results</h2>
-            <div class="overall-score">
-                <h3>Overall Health Score</h3>
-                <div class="score-circle ${getScoreClass(prediction.overallScore)}">
-                    ${prediction.overallScore}
-                </div>
-                <p>Status: ${prediction.healthStatus}</p>
-            </div>
-            
-            <div class="detailed-scores">
-                <h3>Detailed Health Scores</h3>
-                <div class="score-grid">
-                    ${Object.entries(prediction.scores).map(([key, value]) => `
-                        <div class="score-item">
-                            <label>${formatLabel(key)}</label>
-                            <div class="score ${getScoreClass(value)}">${value}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-
-            <div class="risk-factors">
-                <h3>Health Risk Assessment</h3>
-                <div class="risk-grid">
-                    ${Object.entries(prediction.risks).map(([key, value]) => `
-                        <div class="risk-item ${getRiskClass(value)}">
-                            <label>${formatLabel(key)} Risk</label>
-                            <span>${formatRiskLevel(value)}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-
-            <div class="action-buttons">
-                <button onclick="window.location.href='/prediction-history.html'">View History</button>
-                <button onclick="window.location.href='/dashboard.html'">Back to Dashboard</button>
-            </div>
-        `;
         
-        resultSection.style.display = 'block';
-        predictionForm.style.display = 'none';
+        // Ensure the prediction results container is visible
+        const predictionResults = document.getElementById('prediction-results');
+        if (predictionResults) {
+            predictionResults.style.display = 'block';
+        }
+
+        // Format the prediction data for the chart
+        const chartData = {
+            bmiScore: prediction.scores.bmi,
+            bloodPressureScore: prediction.scores.bloodPressure,
+            heartRateScore: prediction.scores.heartRate,
+            metabolicHealthScore: prediction.scores.metabolicHealth,
+            respiratoryHealthScore: prediction.scores.respiratoryHealth,
+            lifestyleScore: prediction.scores.lifestyle
+        };
+
+        // Render the chart
+        renderHealthPredictionChart(chartData);
+
+        // Display detailed information
+        displayPredictionInfo(prediction);
+    }
+
+    function renderHealthPredictionChart(predictionData) {
+        const ctx = document.getElementById('healthPredictionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['BMI', 'Blood Pressure', 'Heart Rate', 'Metabolic Health', 'Respiratory Health', 'Lifestyle'],
+                datasets: [{
+                    label: 'Health Scores',
+                    data: [
+                        predictionData.bmiScore,
+                        predictionData.bloodPressureScore,
+                        predictionData.heartRateScore,
+                        predictionData.metabolicHealthScore,
+                        predictionData.respiratoryHealthScore,
+                        predictionData.lifestyleScore
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function displayPredictionInfo(predictionData) {
+        const infoDiv = document.getElementById('predictionInfo');
+        infoDiv.innerHTML = `
+            <p>BMI Score: ${predictionData.scores.bmi}</p>
+            <p>Blood Pressure Analysis: ${predictionData.scores.bloodPressure}</p>
+            <p>Heart Rate Evaluation: ${predictionData.scores.heartRate}</p>
+            <p>Metabolic Health Score: ${predictionData.scores.metabolicHealth}</p>
+            <p>Respiratory Health Score: ${predictionData.scores.respiratoryHealth}</p>
+            <p>Lifestyle Score: ${predictionData.scores.lifestyle}</p>
+        `;
     }
 
     // Helper functions

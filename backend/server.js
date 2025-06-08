@@ -341,41 +341,44 @@ app.get('/api/health-trends', verifyToken, async (req, res) => {
     }
 });
 
-// Enhanced health prediction calculation
-function calculateMetabolicScore(glucoseLevel, cholesterol) {
-    let score = 100;
-    
-    // Glucose analysis (normal range: 70-140 mg/dL)
-    if (glucoseLevel < 70 || glucoseLevel > 140) {
-        score -= 20;
-    } else if (glucoseLevel < 80 || glucoseLevel > 120) {
-        score -= 10;
+// Export Health Data API
+app.get('/api/export-health-data', verifyToken, async (req, res) => {
+    try {
+        const healthData = await HealthPrediction.find({ userId: req.user.id });
+
+        // Convert data to CSV or desired format
+        const csvData = generateHealthDataCSV(healthData);
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=health_data.csv');
+        res.send(csvData);
+    } catch (error) {
+        console.error('Error exporting health data:', error);
+        res.status(500).json({ error: 'An error occurred while exporting health data' });
     }
-    
-    // Cholesterol analysis
-    if (cholesterol.total > 200) score -= 10;
-    if (cholesterol.ldl > 130) score -= 10;
-    if (cholesterol.hdl < 40) score -= 10;
-    
-    return Math.max(0, score);
+});
+
+// Helper functions for health calculations
+function calculateBloodPressureScore(systolic, diastolic) {
+    // Normal BP: 120/80
+    const systolicScore = 100 - Math.abs(120 - systolic);
+    const diastolicScore = 100 - Math.abs(80 - diastolic);
+    return (systolicScore + diastolicScore) / 2;
 }
 
-function calculateRespiratoryScore(respiratoryRate, oxygenSaturation) {
-    let score = 100;
-    
-    // Respiratory rate analysis (normal range: 12-20 breaths/min)
-    if (respiratoryRate < 12 || respiratoryRate > 20) {
-        score -= 15;
-    }
-    
-    // Oxygen saturation analysis (normal range: 95-100%)
-    if (oxygenSaturation < 95) {
-        score -= 20;
-    } else if (oxygenSaturation < 90) {
-        score -= 40;
-    }
-    
-    return Math.max(0, score);
+function calculateHeartRateScore(heartRate) {
+    // Normal resting heart rate: 60-100 bpm
+    if (heartRate < 60) return 70;
+    if (heartRate > 100) return 60;
+    return 100 - Math.abs(80 - heartRate);
+}
+
+function calculateBMIScore(bmi) {
+    // Normal BMI: 18.5-24.9
+    if (bmi < 18.5) return 70;
+    if (bmi > 30) return 50;
+    if (bmi > 25) return 80;
+    return 100;
 }
 
 function calculateLifestyleScore(activityLevel, smokingStatus, alcoholConsumption, sleepHours, stressLevel, dietType) {
@@ -428,6 +431,93 @@ function calculateLifestyleScore(activityLevel, smokingStatus, alcoholConsumptio
     }
     
     return score;
+}
+
+function calculateMetabolicScore(glucoseLevel, cholesterol) {
+    let score = 100;
+    
+    // Glucose analysis (normal range: 70-140 mg/dL)
+    if (glucoseLevel < 70 || glucoseLevel > 140) {
+        score -= 20;
+    } else if (glucoseLevel < 80 || glucoseLevel > 120) {
+        score -= 10;
+    }
+    
+    // Cholesterol analysis
+    if (cholesterol.total > 200) score -= 10;
+    if (cholesterol.ldl > 130) score -= 10;
+    if (cholesterol.hdl < 40) score -= 10;
+    
+    return Math.max(0, score);
+}
+
+function calculateRespiratoryScore(respiratoryRate, oxygenSaturation) {
+    let score = 100;
+    
+    // Respiratory rate analysis (normal range: 12-20 breaths/min)
+    if (respiratoryRate < 12 || respiratoryRate > 20) {
+        score -= 15;
+    }
+    
+    // Oxygen saturation analysis (normal range: 95-100%)
+    if (oxygenSaturation < 95) {
+        score -= 20;
+    } else if (oxygenSaturation < 90) {
+        score -= 40;
+    }
+    
+    return Math.max(0, score);
+}
+
+function calculateHeartDiseaseRisk(age, gender, bmi, bloodPressureScore, conditions) {
+    let risk = 0;
+    risk += age > 50 ? 30 : 10;
+    risk += gender === 'male' ? 20 : 15;
+    risk += bmi > 25 ? 20 : 10;
+    risk += bloodPressureScore < 70 ? 30 : 10;
+    risk += conditions?.includes('heartDisease') ? 40 : 0;
+    return Math.min(risk, 100);
+}
+
+function calculateStrokeRisk(age, bloodPressureScore, conditions) {
+    let risk = 0;
+    risk += age > 60 ? 35 : 15;
+    risk += bloodPressureScore < 70 ? 35 : 15;
+    risk += conditions?.includes('hypertension') ? 30 : 0;
+    return Math.min(risk, 100);
+}
+
+function calculateDiabetesRisk(bmi, familyHistory, conditions) {
+    let risk = 0;
+    risk += bmi > 30 ? 40 : 20;
+    risk += familyHistory?.toLowerCase().includes('diabetes') ? 30 : 0;
+    risk += conditions?.includes('diabetes') ? 40 : 0;
+    return Math.min(risk, 100);
+}
+
+function calculateObesityRisk(bmi, activityLevel) {
+    let risk = 0;
+    risk += bmi > 30 ? 50 : (bmi > 25 ? 30 : 10);
+    risk += activityLevel === 'sedentary' ? 30 : (activityLevel === 'moderate' ? 15 : 5);
+    return Math.min(risk, 100);
+}
+
+function calculateHypertensionRisk(systolic, diastolic, age) {
+    let risk = 0;
+    risk += systolic > 140 || diastolic > 90 ? 40 : 20;
+    risk += age > 50 ? 30 : 15;
+    return Math.min(risk, 100);
+}
+
+function calculateOverallScore(bloodPressureScore, heartRateScore, bmiScore, lifestyleScore) {
+    return (bloodPressureScore * 0.3) + (heartRateScore * 0.2) + (bmiScore * 0.2) + (lifestyleScore * 0.3);
+}
+
+function getHealthStatus(score) {
+    if (score >= 90) return 'Excellent';
+    if (score >= 75) return 'Good';
+    if (score >= 60) return 'Fair';
+    return 'Poor';
 }
 
 function calculateHealthTrends(predictions) {
@@ -485,107 +575,6 @@ function generateHealthDataCSV(predictions) {
     ].join(','));
     
     return [headers, ...rows].join('\n');
-}
-
-// Helper functions for health calculations
-function calculateBloodPressureScore(systolic, diastolic) {
-    // Normal BP: 120/80
-    const systolicScore = 100 - Math.abs(120 - systolic);
-    const diastolicScore = 100 - Math.abs(80 - diastolic);
-    return (systolicScore + diastolicScore) / 2;
-}
-
-function calculateHeartRateScore(heartRate) {
-    // Normal resting heart rate: 60-100 bpm
-    if (heartRate < 60) return 70;
-    if (heartRate > 100) return 60;
-    return 100 - Math.abs(80 - heartRate);
-}
-
-function calculateBMIScore(bmi) {
-    // Normal BMI: 18.5-24.9
-    if (bmi < 18.5) return 70;
-    if (bmi > 30) return 50;
-    if (bmi > 25) return 80;
-    return 100;
-}
-
-function calculateLifestyleScore(activityLevel, smokingStatus, alcoholConsumption) {
-    let score = 0;
-    
-    // Activity score
-    switch(activityLevel) {
-        case 'active': score += 40; break;
-        case 'moderate': score += 30; break;
-        case 'sedentary': score += 10; break;
-    }
-    
-    // Smoking score
-    switch(smokingStatus) {
-        case 'nonSmoker': score += 40; break;
-        case 'formerSmoker': score += 30; break;
-        case 'currentSmoker': score += 10; break;
-    }
-    
-    // Alcohol score
-    switch(alcoholConsumption) {
-        case 'never': score += 20; break;
-        case 'occasional': score += 15; break;
-        case 'regular': score += 5; break;
-    }
-    
-    return score;
-}
-
-function calculateHeartDiseaseRisk(age, gender, bmi, bloodPressureScore, conditions) {
-    let risk = 0;
-    risk += age > 50 ? 30 : 10;
-    risk += gender === 'male' ? 20 : 15;
-    risk += bmi > 25 ? 20 : 10;
-    risk += bloodPressureScore < 70 ? 30 : 10;
-    risk += conditions?.includes('heartDisease') ? 40 : 0;
-    return Math.min(risk, 100);
-}
-
-function calculateStrokeRisk(age, bloodPressureScore, conditions) {
-    let risk = 0;
-    risk += age > 60 ? 35 : 15;
-    risk += bloodPressureScore < 70 ? 35 : 15;
-    risk += conditions?.includes('hypertension') ? 30 : 0;
-    return Math.min(risk, 100);
-}
-
-function calculateDiabetesRisk(bmi, familyHistory, conditions) {
-    let risk = 0;
-    risk += bmi > 30 ? 40 : 20;
-    risk += familyHistory?.toLowerCase().includes('diabetes') ? 30 : 0;
-    risk += conditions?.includes('diabetes') ? 40 : 0;
-    return Math.min(risk, 100);
-}
-
-function calculateObesityRisk(bmi, activityLevel) {
-    let risk = 0;
-    risk += bmi > 30 ? 50 : (bmi > 25 ? 30 : 10);
-    risk += activityLevel === 'sedentary' ? 30 : (activityLevel === 'moderate' ? 15 : 5);
-    return Math.min(risk, 100);
-}
-
-function calculateHypertensionRisk(systolic, diastolic, age) {
-    let risk = 0;
-    risk += systolic > 140 || diastolic > 90 ? 40 : 20;
-    risk += age > 50 ? 30 : 15;
-    return Math.min(risk, 100);
-}
-
-function calculateOverallScore(bloodPressureScore, heartRateScore, bmiScore, lifestyleScore) {
-    return (bloodPressureScore * 0.3) + (heartRateScore * 0.2) + (bmiScore * 0.2) + (lifestyleScore * 0.3);
-}
-
-function getHealthStatus(score) {
-    if (score >= 90) return 'Excellent';
-    if (score >= 75) return 'Good';
-    if (score >= 60) return 'Fair';
-    return 'Poor';
 }
 
 const PORT = process.env.PORT || 5000;
